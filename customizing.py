@@ -1,7 +1,6 @@
 import tensorflow as tf
 import modeling as md
 from transformers import BertTokenizer
-
 # 바꿔야 할 파라미터
 # vocab size
 # hidden size : Transformer 인코더 layer 개수 및 pooler layer 개수

@@ -1,0 +1,5 @@
+query	costValue
+select c1 from t1;	4
+select c1, c2 from t1, t2;	8
+select c1 from t2;	4
+select c6 from t1 where c6=2;	16
