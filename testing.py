@@ -31,9 +31,22 @@ Vocab = open("./vocab.txt", "r")
 Tokenizer = BertTokenizer.from_pretrained("./vocab.txt")
 
 # Dataset
+
 # 데이터셋 불러와 확인
-train_data = pandas.read_csv("sample_data.txt", sep='\t')
-print(train_data.head(10))
-# BERT 입력 형식에 맞게 변환
+train = pandas.read_csv("sample_data.txt", sep='\t')
+print(train.head(50))
+# print(train.shape)
+
+# Query와 cost value 분리하여 추출
+query = train['query']
+cost = train['costValue'].values
+# print(query[:10])
+# print(cost)
+
+# BERT 입력 형식에 맞게 변환 & Tokenization
+query = ["[CLS] " + str(q) + " [SEP]" for q in query]
+tokenized_query= [Tokenizer.tokenize(q) for q in query]
+print(tokenized_query)
+
 
 # Training
