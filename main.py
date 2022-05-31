@@ -17,6 +17,7 @@ import random
 import time
 import datetime
 
+
 train_txt = open('./train_data.txt', 'r')
 train = pd.read_csv(train_txt, sep='\t')
 test_txt = open('./test_data.txt', 'r')
@@ -67,12 +68,12 @@ train_masks, validation_masks, _, _ = train_test_split(attention_masks,
                                                        random_state=2018, 
                                                        test_size=0.1)
 
-train_inputs = torch.tensor(train_inputs)
-train_labels = torch.tensor(train_labels.values)
-train_masks = torch.tensor(train_masks)
-validation_inputs = torch.tensor(validation_inputs)
-validation_labels = torch.tensor(validation_labels.values)
-validation_masks = torch.tensor(validation_masks)            
+train_inputs = torch.tensor(train_inputs).float()
+train_labels = torch.tensor(train_labels.values).float()
+train_masks = torch.tensor(train_masks).float()
+validation_inputs = torch.tensor(validation_inputs).float()
+validation_labels = torch.tensor(validation_labels.values).float()
+validation_masks = torch.tensor(validation_masks).float()            
 
 print(train_inputs[0])
 print(train_labels[0])
@@ -113,9 +114,9 @@ for seq in test_input_ids:
     seq_mask = [float(i > 0) for i in seq]
     test_attention_masks.append(seq_mask)
 
-test_inputs = torch.tensor(test_input_ids)
-test_labels = torch.tensor(test_labels)
-test_masks = torch.tensor(test_attention_masks)
+test_inputs = torch.tensor(test_input_ids).float()
+test_labels = torch.tensor(test_labels).float()
+test_masks = torch.tensor(test_attention_masks).float()
 
 print(test_inputs[0])
 print(test_labels[0])
@@ -214,24 +215,26 @@ for epoch_i in range(0, epochs):
         
         # 배치에서 데이터 추출
         b_input_ids, b_input_mask, b_labels = batch
-
+        b_input_ids = torch.tensor(b_input_ids).to(device).long()
         # b_labels = b_labels.unsqueeze(-1)
 
         print(" batch :", batch)
-
-        print("b_input_ids :", b_input_ids)
+        print("b_input_ids :", b_input_ids)   
+        print("b_input_mask: ", b_input_mask)
         print("labels :", b_labels)
-
+        print(b_input_ids.dtype) # int64   
         # Forward 수행                
-        outputs = model(b_input_ids, 
+        outputs = model(b_input_ids,
                         token_type_ids=None, 
                         attention_mask=b_input_mask, 
                         labels=b_labels)
 
         print(" outputs : ", outputs)
+        # Output: loss, logits, hidden_states, attentions
         
         # 로스 구함
-        loss = outputs[0]
+        loss = outputs[0]  # float32
+        print("loss: ",loss)
 
         # 총 로스 계산
         total_loss += loss.item()
@@ -282,6 +285,7 @@ for epoch_i in range(0, epochs):
         
         # 배치에서 데이터 추출
         b_input_ids, b_input_mask, b_labels = batch
+        b_input_ids = torch.tensor(b_input_ids).to(device).long()
         
         # 그래디언트 계산 안함
         with torch.no_grad():     
