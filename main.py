@@ -23,16 +23,17 @@ train = pd.read_csv(train_txt, sep='\t')
 test_txt = open('./test_data.txt', 'r')
 test = pd.read_csv(test_txt, sep='\t')
 
-print(train)
+print("train data: \n", train)
 
 print("[train shape]\n", train.shape)
 print("[test shape]\n", test.shape)
 
 queries = train['query']
 queries = ["[CLS] " + str(query[:-1]) + " [SEP]" for query in queries]
-print(queries)
+print("Queries: \n", queries)
 
 labels = train['cost']
+NUM_LABELS=6
 
 tokenizer = BertTokenizer.from_pretrained("./vocab.txt")
 tokenized_queries = [tokenizer.tokenize(query) for query in queries]
@@ -46,7 +47,7 @@ input_ids = [tokenizer.convert_tokens_to_ids(tokenized_query) for tokenized_quer
 print("input ids\n", input_ids)
 input_ids = pad_sequences(input_ids, maxlen=max_len, dtype='long', truncating='post', padding='post')
 
-print(input_ids[0])
+print("input ids[0]: ", input_ids[0])
 
 attention_masks = []
 
@@ -54,7 +55,7 @@ for seq in input_ids:
     seq_mask = [float(i > 0) for i in seq]
     attention_masks.append(seq_mask)
 
-print(attention_masks[0])
+print("attention_masks[0]: ", attention_masks[0])
 
 train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids,
                                                                                     labels, 
@@ -75,12 +76,12 @@ validation_inputs = torch.tensor(validation_inputs).float()
 validation_labels = torch.tensor(validation_labels.values).float()
 validation_masks = torch.tensor(validation_masks).float()            
 
-print(train_inputs[0])
-print(train_labels[0])
-print(train_masks[0])
-print(validation_inputs[0])
-print(validation_labels[0])
-print(validation_masks[0])
+print("train_inputs[0]: ", train_inputs[0])
+print("train_labels[0]: ", train_labels[0])
+print("train_masks[0]: ", train_masks[0])
+print("validation_inputs[0]: ", validation_inputs[0])
+print("validation_labels[0]: ", validation_labels[0])
+print("validation_masks[0]: ", validation_masks[0])
 
 batch_size = 4
 
@@ -97,10 +98,10 @@ validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, 
 test_queries = test['query']
 
 test_queries = ["[CLS] " + str(query[:-1]) + " [SEP]" for query in test_queries]
-print(test_queries)
+print("test queries: ", test_queries)
 
 test_labels = test['cost'].values
-print(test_labels)
+print("test_labels ", test_labels)
 
 tokenized_test_queries = [tokenizer.tokenize(query) for query in test_queries]
 
@@ -118,9 +119,9 @@ test_inputs = torch.tensor(test_input_ids).float()
 test_labels = torch.tensor(test_labels).float()
 test_masks = torch.tensor(test_attention_masks).float()
 
-print(test_inputs[0])
-print(test_labels[0])
-print(test_masks[0])
+print("test_inputs[0]: ", test_inputs[0])
+print("test_labels[0]: ", test_labels[0])
+print("test_masks[0]: ", test_masks[0])
 
 test_data = TensorDataset(test_inputs, test_masks, test_labels)
 test_sampler = RandomSampler(test_data)
@@ -130,8 +131,10 @@ device = torch.device("cpu")
 
 # ---------------------------------- model 생성 -------------------------------------
 
-Config = BertConfig(500)
-model = BertForSequenceClassification.from_pretrained("bert-base-multilingual-cased", num_labels=1)
+config = BertConfig.from_pretrained('bert-base-uncased')
+config.num_labels = NUM_LABELS
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=NUM_LABELS)
+# print(model.parameters) -> 확인 결과: (classifier): Linear(in_features=768, out_features=6, bias=True)
 # model2 = BertForMultipleChoice.from_pretrained("")
 
 optimizer = AdamW(model.parameters(),
@@ -160,14 +163,11 @@ print("##### check A")
 def flat_accuracy(preds, labels):
     pred_flat = np.argmax(preds, axis=1).flatten()
     labels_flat = labels.flatten()
-
     return np.sum(pred_flat == labels_flat) / len(labels_flat)
 
 def format_time(elapsed):
-
     # 반올림
     elapsed_rounded = int(round((elapsed)))
-    
     # hh:mm:ss으로 형태 변경
     return str(datetime.timedelta(seconds=elapsed_rounded))
 
@@ -216,24 +216,24 @@ for epoch_i in range(0, epochs):
         # 배치에서 데이터 추출
         b_input_ids, b_input_mask, b_labels = batch
         b_input_ids = torch.tensor(b_input_ids).to(device).long()
-        # b_labels = b_labels.unsqueeze(-1)
+        # b_labels = b_labels.squeeze(0)
 
-        print(" batch :", batch)
-        print("b_input_ids :", b_input_ids)   
-        print("b_input_mask: ", b_input_mask)
-        print("labels :", b_labels)
-        print(b_input_ids.dtype) # int64   
+        print("batch :", batch)
+        print("b_input_ids :", b_input_ids, b_input_ids.shape)   # int64 torch.Size([4, 8])
+        print("b_input_mask: ", b_input_mask, b_input_mask.shape) # float32 torch.Size([4, 8])
+        print("labels :", b_labels, b_labels.shape) # float32 torch.Size([4])
+
         # Forward 수행                
         outputs = model(b_input_ids,
                         token_type_ids=None, 
                         attention_mask=b_input_mask, 
                         labels=b_labels)
 
-        print(" outputs : ", outputs)
-        # Output: loss, logits, hidden_states, attentions
+        print("outputs : ", outputs)  # Output: loss, logits, hidden_states, attentions
+
         
         # 로스 구함
-        loss = outputs[0]  # float32
+        loss = outputs[0]
         print("loss: ",loss)
 
         # 총 로스 계산
@@ -313,6 +313,7 @@ print("")
 print("Training complete!")
 
 # ---------------------------------- 테스트셋 평가 -------------------------------------
+print("Test set evaluation")
 #시작 시간 설정
 t0 = time.time()
 
@@ -330,7 +331,7 @@ for step, batch in enumerate(test_dataloader):
         elapsed = format_time(time.time() - t0)
         print('  Batch {:>5,}  of  {:>5,}.    Elapsed: {:}.'.format(step, len(test_dataloader), elapsed))
 
-    # 배치를 GPU에 넣음
+    # 배치를 CPU에 넣음
     batch = tuple(t.to(device) for t in batch)
     
     # 배치에서 데이터 추출
@@ -359,12 +360,12 @@ for step, batch in enumerate(test_dataloader):
 print("")
 print("Accuracy: {0:.2f}".format(eval_accuracy/nb_eval_steps))
 print("Test took: {:}".format(format_time(time.time() - t0)))
+print("Test set evaluation complete!")
 
 
 # ---------------------- 새로운 문장 테스트 --------------------
 # 입력 데이터 변환
 def convert_input_data(sentences):
-
     # BERT의 토크나이저로 문장을 토큰으로 분리
     tokenized_texts = [tokenizer.tokenize(sent) for sent in sentences]
 
@@ -387,8 +388,8 @@ def convert_input_data(sentences):
         attention_masks.append(seq_mask)
 
     # 데이터를 파이토치의 텐서로 변환
-    inputs = torch.tensor(input_ids)
-    masks = torch.tensor(attention_masks)
+    inputs = torch.tensor(input_ids) # 데이터 타입: torch.int64
+    masks = torch.tensor(attention_masks) # 데이터 타입: torch.float32
 
     return inputs, masks
 
@@ -400,6 +401,7 @@ def test_sentences(sentences):
 
     # 문장을 입력 데이터로 변환
     inputs, masks = convert_input_data(sentences)
+    print("convert_input_data 결과: \ninputs: ", inputs, "\nmasks: ", masks)
 
     # 데이터를 GPU에 넣음
     b_input_ids = inputs.to(device)
@@ -411,9 +413,11 @@ def test_sentences(sentences):
         outputs = model(b_input_ids, 
                         token_type_ids=None, 
                         attention_mask=b_input_mask)
+        print("outputs: ", outputs)
 
     # 출력 로짓 구함
     logits = outputs[0]
+    print("logits: ", logits)
 
     # CPU로 데이터 이동
     logits = logits.detach().cpu().numpy()
@@ -422,7 +426,13 @@ def test_sentences(sentences):
 
 
 
-logits = test_sentences(['SELECT T3, T4 FROM T1;'])
+logits_test1 = test_sentences(['SELECT T3, T4 FROM T1;'])
 
-print(logits)
-print(np.argmax(logits))
+print(logits_test1)
+print(np.argmax(logits_test1))
+
+
+logits_test2 = test_sentences(['select c3, c1, c2 from t4, t1 where c2 and c1 and c3;'])
+
+print(logits_test2)
+print(np.argmax(logits_test2))

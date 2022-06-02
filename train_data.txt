@@ -1,23 +1,35 @@
 query	cost
-select c1 from t1;	4
-select c1, c2 from t1, t2;	8
-select c1 from t2;	4
-select c6 from t1 where c6=2;	2
-select c22, c21 from t1 where c2=42;	8
-Select c13 from t1;	8
 select c1 from t1;	4.0
 select c2 from t2 where c1;	1.0
-select c1 from t3 wehre c1 and c2;	2.0
+select c1 from t3 where c1 and c2; 	2.0
 select c5 from t4 where c2 and c1 and c3;	1.0
-select c1 from t1, t2, t3, t4 where c1 and c2 and c3;	4.0
+select c1 from t1, t2, t3, t4 where c1 and c2 and c3; 	4.0
 select c2 from t2 where c1;	1.0
-select c1 from t3 wehre c1 and c2;	2.0
+select c1 from t3 where c1 and c2; 	2.0
 select c5 from t4, t5 where c2 and c1 and c3;	1.0
-select c8 from t1;	4.0
-select c7 from t2 where c1;	1.0
-select c6, c5 from t3 wehre c1 and c2;	2.0
+select c8 from t1;	16.0
+select c7 from t2 where c1;	2.0
+select c6, c5 from t3 where c1 and c2;	4.0
+select c5 from t4 where c2 and c1 and c3;	8.0
+select c5 from t1;	16.0
+select c1 from t2, t1 where c1;	16.0
+select c2 from t3 where c1 and c2;	32.0
+select c3 c1 c2 from t4 t1 where c2 and c1 and c3;	1.0
+select c1 from t1;	4.0
+select c2 from t2 where c1;	1.0
+select c1 frtom t3 where c1 and c2; 	2.0
 select c5 from t4 where c2 and c1 and c3;	1.0
-select c5 from t1;	4.0
-select c1 from t2, t1 where c1;	1.0
-select c2 from t3 wehre c1 and c2;	2.0
-select c3, c1, c2 from t4, t1 where c2 and c1 and c3;	1.0
+select c1 from t1 t2 t3 t4 where c1 and c2 and c3; 	4.0
+select c2 from t2 where c1;	1.0
+select c1 from t3 where c1 and c2; 	2.0
+select c5 from t4, t5 where c2 and c1 and c3;	1.0
+select c8 from t1;	16.0
+select c7 from t2 where c1;	2.0
+select c6 c5 from t3 where c1 and c2;	4.0
+select c5 from t4 where c2 and c1 and c3;	8.0
+select c5 from t1;	16.0
+select c1 from t2, t1 where c1;	16.0
+select c2 from t3 where c1 and c2;	32.0
+select c3 c1 c2 from t4 t1 where c2 and c1 and c3;	1.0
+select c5 from t1 where c2 order by c2;	4.0
+select c2 from t5 where c1 c2 group by c1;	16.0
