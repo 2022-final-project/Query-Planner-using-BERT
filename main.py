@@ -409,10 +409,11 @@ def test_sentences(sentences):
 
     # 평가모드로 변경
     model.eval()
+    print("======== 최종 Result ========\n=== input data: ", sentences)
 
     # 문장을 입력 데이터로 변환
     inputs, masks = convert_input_data(sentences)
-    print("convert_input_data 결과: \ninputs: ", inputs, "\nmasks: ", masks)
+    print("=== convert_input_data 결과 \ninputs: ", inputs, "\nmasks: ", masks)
 
     # 데이터를 GPU에 넣음
     b_input_ids = inputs.to(device)
@@ -424,11 +425,11 @@ def test_sentences(sentences):
         outputs = model(b_input_ids, 
                         token_type_ids=None, 
                         attention_mask=b_input_mask)
-        print("outputs: ", outputs)
+        print("=== outputs: ", outputs)
 
     # 출력 로짓 구함
     logits = outputs[0]
-    print("logits: ", logits)
+    print("=== logits: ", logits)
 
     # CPU로 데이터 이동
     logits = logits.detach().cpu().numpy()
@@ -439,7 +440,11 @@ def test_sentences(sentences):
     elif np.argmax(logits)==4: result=16.0
     elif np.argmax(logits)==5: result=32.0
 
-    return logits, result
+    print("=== result: ", result)
+    return result
+
+
+# ---------------------- 새로운 문장 테스트 입력 --------------------
 
 logits_test1 = test_sentences(['SELECT T3, T4 FROM T1;'])
 print(logits_test1)
