@@ -32,8 +32,19 @@ queries = train['query']
 queries = ["[CLS] " + str(query[:-1]) + " [SEP]" for query in queries]
 print("Queries: \n", queries)
 
-labels = train['cost']
 NUM_LABELS=6
+labels_before_Encoding = train['cost']    
+labels=[]
+for cost in labels_before_Encoding:
+    if cost==1.0: labels.append([1, 0, 0, 0, 0, 0])
+    elif cost==2.0: labels.append([0, 1, 0, 0, 0, 0])
+    elif cost==4.0: labels.append([0, 0, 1, 0, 0, 0])
+    elif cost==8.0: labels.append([0, 0, 0, 1, 0, 0])
+    elif cost==16.0: labels.append([0, 0, 0, 0, 1, 0])
+    elif cost==32.0: labels.append([0, 0, 0, 0, 0, 1])
+
+
+
 
 tokenizer = BertTokenizer.from_pretrained("./vocab.txt")
 tokenized_queries = [tokenizer.tokenize(query) for query in queries]
@@ -70,10 +81,10 @@ train_masks, validation_masks, _, _ = train_test_split(attention_masks,
                                                        test_size=0.1)
 
 train_inputs = torch.tensor(train_inputs).float()
-train_labels = torch.tensor(train_labels.values).float()
+train_labels = torch.tensor(train_labels).float()
 train_masks = torch.tensor(train_masks).float()
 validation_inputs = torch.tensor(validation_inputs).float()
-validation_labels = torch.tensor(validation_labels.values).float()
+validation_labels = torch.tensor(validation_labels).float()
 validation_masks = torch.tensor(validation_masks).float()            
 
 print("train_inputs[0]: ", train_inputs[0])
@@ -421,18 +432,20 @@ def test_sentences(sentences):
 
     # CPU로 데이터 이동
     logits = logits.detach().cpu().numpy()
+    if np.argmax(logits)==0: result=1.0
+    elif np.argmax(logits)==1: result=2.0
+    elif np.argmax(logits)==2: result=4.0
+    elif np.argmax(logits)==3: result=8.0
+    elif np.argmax(logits)==4: result=16.0
+    elif np.argmax(logits)==5: result=32.0
 
-    return logits
-
-
+    return logits, result
 
 logits_test1 = test_sentences(['SELECT T3, T4 FROM T1;'])
-
 print(logits_test1)
-print(np.argmax(logits_test1))
-
 
 logits_test2 = test_sentences(['select c3, c1, c2 from t4, t1 where c2 and c1 and c3;'])
-
 print(logits_test2)
-print(np.argmax(logits_test2))
+
+logits_test3 = test_sentences(['select c6 c5 from t3 where c1 and c2;'])
+print(logits_test3)

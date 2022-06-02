@@ -3,7 +3,7 @@ select c1 from t1;	4.0
 select c2 from t2 where c1;	1.0
 select c1 from t3 where c1 and c2; 	2.0
 select c5 from t4 where c2 and c1 and c3;	1.0
-select c1 from t1, t2, t3, t4 where c1 and c2 and c3; 	4.0
+select c1 from t1 t2, t3, t4 where c1 and c2 and c3; 	4.0
 select c2 from t2 where c1;	1.0
 select c1 from t3 where c1 and c2; 	2.0
 select c5 from t4, t5 where c2 and c1 and c3;	1.0
