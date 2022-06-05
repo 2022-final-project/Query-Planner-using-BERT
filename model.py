@@ -142,7 +142,7 @@ device = torch.device("cpu")
 
 # ---------------------------------- model 생성 -------------------------------------
 
-config = BertConfig.from_pretrained('bert-base-uncased')
+config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regression")
 config.num_labels = NUM_LABELS
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=NUM_LABELS)
 # print(model.parameters) -> 확인 결과: (classifier): Linear(in_features=768, out_features=6, bias=True)
