@@ -17,6 +17,14 @@ import random
 import time
 import datetime
 
+# ---------------------- 새로운 테스트 쿼리문 입력 --------------------
+
+test_query1=(['SELECT T3, T4 FROM T1;'])
+test_query2=(['select c26 sum c14 c15 from t1 t4 t2 t8 t3 t7 where c1 c30 and c9 c29 and c11 c47 and c4 c50 and c50 c25 and c27 c59 and c60 and c33 date and c33 date year group by c26 order by desc;'])
+test_query3=(['select c6 c5 from t3 where c1 and c2;'])
+
+# ---------------------- Modeling --------------------
+
 
 train_txt = open('./train_data.txt', 'r')
 train = pd.read_csv(train_txt, sep='\t')
@@ -443,13 +451,8 @@ def test_sentences(sentences):
     return result
 
 
-# ---------------------- 새로운 문장 테스트 입력 --------------------
+# ---------------------- 새로운 쿼리문 테스트 결과 출력 --------------------
 
-logits_test1 = test_sentences(['SELECT T3, T4 FROM T1;'])
-print(logits_test1)
-
-logits_test2 = test_sentences(['select c26 sum c14 c15 from t1 t4 t2 t8 t3 t7 where c1 c30 and c9 c29 and c11 c47 and c4 c50 and c50 c25 and c27 c59 and c60 and c33 date and c33 date year group by c26 order by desc;'])
-print(logits_test2)
-
-logits_test3 = test_sentences(['select c6 c5 from t3 where c1 and c2;'])
-print(logits_test3) 
+print(test_sentences(test_query1))
+print(test_sentences(test_query2))
+print(test_sentences(test_query3))
