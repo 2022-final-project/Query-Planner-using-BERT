@@ -25,7 +25,7 @@ test_query3=(['select c6 c5 from t3 where c1 and c2;'])
 
 # ---------------------- Modeling --------------------
 
-
+RAND_SEED = random.randint(1, 3000)
 train_txt = open('./train_data.txt', 'r')
 train = pd.read_csv(train_txt, sep='\t')
 test_txt = open('./test_data.txt', 'r')
@@ -41,15 +41,32 @@ queries = ["[CLS] " + str(query[:-1]) + " [SEP]" for query in queries]
 print("Queries: \n", queries)
 
 NUM_LABELS=6
+
 labels_before_Encoding = train['cost']    
 labels=[]
 for cost in labels_before_Encoding:
-    if cost==1: labels.append([1, 0, 0, 0, 0, 0])
-    elif cost==2: labels.append([0, 1, 0, 0, 0, 0])
-    elif cost==4: labels.append([0, 0, 1, 0, 0, 0])
-    elif cost==8: labels.append([0, 0, 0, 1, 0, 0])
-    elif cost==16: labels.append([0, 0, 0, 0, 1, 0])
-    elif cost==32: labels.append([0, 0, 0, 0, 0, 1])
+    cost_str = str(cost)
+    if len(cost_str) == 5: cost_str = "0" + cost_str
+    elif len(cost_str) == 4 : cost_str = "00" + cost_str
+    elif len(cost_str) == 3 : cost_str = "000" + cost_str
+    elif len(cost_str) == 2 : cost_str = "0000" + cost_str
+    elif len(cost_str) == 1 : cost_str = "00000" + cost_str
+    elif len(cost_str) == 0 : cost_str = "000000"
+
+    print(cost_str)
+
+    label_temp = [0, 0, 0, 0, 0, 0]
+
+    if cost_str[0] == '1': label_temp[0] = 1
+    if cost_str[1] == '1': label_temp[1] = 1
+    if cost_str[2] == '1': label_temp[2] = 1
+    if cost_str[3] == '1': label_temp[3] = 1
+    if cost_str[4] == '1': label_temp[4] = 1
+    if cost_str[5] == '1': label_temp[5] = 1
+
+    labels.append(label_temp)
+
+print(labels)
 
 
 tokenizer = BertTokenizer.from_pretrained("./vocab.txt")
@@ -148,7 +165,7 @@ device = torch.device("cpu")
 
 # ---------------------------------- model 생성 -------------------------------------
 
-config = BertConfig.from_pretrained('bert-base-uncased')
+config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regression")
 config.num_labels = NUM_LABELS
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=NUM_LABELS)
 # print(model.parameters) -> 확인 결과: (classifier): Linear(in_features=768, out_features=6, bias=True)
@@ -177,9 +194,21 @@ print("##### check A")
 # early_stopping = EarlyStopping(monitor='val_loss', patience=6)
 
 def flat_accuracy(preds, labels):
-    pred_flat = np.argmax(preds, axis=1).flatten()
-    labels_flat = labels.flatten()
-    return np.sum(pred_flat == labels_flat) / len(labels_flat)
+    sze = len(labels)   # len(preds) == len(labels)
+
+    cnt = 0
+
+    for idx, pred in enumerate(preds):
+        for i in range(0, 6, 1):
+            if pred[i] < 0: pred[i] = 0.0
+            else: pred[i] = 1.0
+            if pred[i] == labels[idx][i] : cnt += 1
+
+    print("preds :", preds)
+    print("labels :", labels)
+    print(" acc : ", cnt / 18)
+
+    return cnt / 18
 
 def format_time(elapsed):
     # 반올림
@@ -272,7 +301,7 @@ for epoch_i in range(0, epochs):
 
     # 평균 로스 계산
     avg_train_loss = total_loss / len(train_dataloader)            
-
+      
     print("")
     print("  Average training loss: {0:.2f}".format(avg_train_loss))
     print("  Training epcoh took: {:}".format(format_time(time.time() - t0)))
