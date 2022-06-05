@@ -52,8 +52,6 @@ for cost in labels_before_Encoding:
     elif cost==32: labels.append([0, 0, 0, 0, 0, 1])
 
 
-
-
 tokenizer = BertTokenizer.from_pretrained("./vocab.txt")
 tokenized_queries = [tokenizer.tokenize(query) for query in queries]
 
