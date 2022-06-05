@@ -36,12 +36,12 @@ NUM_LABELS=6
 labels_before_Encoding = train['cost']    
 labels=[]
 for cost in labels_before_Encoding:
-    if cost==1.0: labels.append([1, 0, 0, 0, 0, 0])
-    elif cost==2.0: labels.append([0, 1, 0, 0, 0, 0])
-    elif cost==4.0: labels.append([0, 0, 1, 0, 0, 0])
-    elif cost==8.0: labels.append([0, 0, 0, 1, 0, 0])
-    elif cost==16.0: labels.append([0, 0, 0, 0, 1, 0])
-    elif cost==32.0: labels.append([0, 0, 0, 0, 0, 1])
+    if cost==1: labels.append([1, 0, 0, 0, 0, 0])
+    elif cost==2: labels.append([0, 1, 0, 0, 0, 0])
+    elif cost==4: labels.append([0, 0, 1, 0, 0, 0])
+    elif cost==8: labels.append([0, 0, 0, 1, 0, 0])
+    elif cost==16: labels.append([0, 0, 0, 0, 1, 0])
+    elif cost==32: labels.append([0, 0, 0, 0, 0, 1])
 
 
 
@@ -142,7 +142,7 @@ device = torch.device("cpu")
 
 # ---------------------------------- model 생성 -------------------------------------
 
-config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regression")
+config = BertConfig.from_pretrained('bert-base-uncased')
 config.num_labels = NUM_LABELS
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=NUM_LABELS)
 # print(model.parameters) -> 확인 결과: (classifier): Linear(in_features=768, out_features=6, bias=True)
@@ -432,13 +432,13 @@ def test_sentences(sentences):
 
     # CPU로 데이터 이동
     logits = logits.detach().cpu().numpy()
-    if np.argmax(logits)==0: result=1.0
-    elif np.argmax(logits)==1: result=2.0
-    elif np.argmax(logits)==2: result=4.0
-    elif np.argmax(logits)==3: result=8.0
-    elif np.argmax(logits)==4: result=16.0
-    elif np.argmax(logits)==5: result=32.0
-
+    if np.argmax(logits)==0: result=1
+    elif np.argmax(logits)==1: result=2
+    elif np.argmax(logits)==2: result=4
+    elif np.argmax(logits)==3: result=8
+    elif np.argmax(logits)==4: result=16
+    elif np.argmax(logits)==5: result=32
+    
     print("=== result: ", result)
     return result
 
@@ -452,4 +452,4 @@ logits_test2 = test_sentences(['select c26 sum c14 c15 from t1 t4 t2 t8 t3 t7 wh
 print(logits_test2)
 
 logits_test3 = test_sentences(['select c6 c5 from t3 where c1 and c2;'])
-print(logits_test3)
+print(logits_test3) 
