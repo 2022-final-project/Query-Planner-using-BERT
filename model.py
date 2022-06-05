@@ -146,7 +146,6 @@ config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regressio
 config.num_labels = NUM_LABELS
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=NUM_LABELS)
 # print(model.parameters) -> 확인 결과: (classifier): Linear(in_features=768, out_features=6, bias=True)
-# model2 = BertForMultipleChoice.from_pretrained("")
 
 optimizer = AdamW(model.parameters(),
                   lr = 2e-5, # 학습률
