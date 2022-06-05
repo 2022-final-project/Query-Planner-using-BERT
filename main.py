@@ -449,7 +449,7 @@ def test_sentences(sentences):
 logits_test1 = test_sentences(['SELECT T3, T4 FROM T1;'])
 print(logits_test1)
 
-logits_test2 = test_sentences(['select c3, c1, c2 from t4, t1 where c2 and c1 and c3;'])
+logits_test2 = test_sentences(['select c26 sum c14 c15 from t1 t4 t2 t8 t3 t7 where c1 c30 and c9 c29 and c11 c47 and c4 c50 and c50 c25 and c27 c59 and c60 and c33 date and c33 date year group by c26 order by desc;'])
 print(logits_test2)
 
 logits_test3 = test_sentences(['select c6 c5 from t3 where c1 and c2;'])
