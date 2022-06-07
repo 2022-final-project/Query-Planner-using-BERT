@@ -18,12 +18,13 @@ import random
 import time
 import datetime
 import random
+import matplotlib.pyplot as plt
 
 RAND_SEED = random.randint(1, 3000)
 VALIDATION_RATE = 0.1
 
 # train_data.txt 와 test_data.txt 를 읽어온다.
-train_txt = open('./modeling/train_data.txt', 'r')
+train_txt = open('./train_data.txt', 'r')
 train = pd.read_csv(train_txt, sep='\t')
 
 test_txt = open('./test_data.txt', 'r')
@@ -62,7 +63,7 @@ for cost in labels_before_Encoding:
 '''
 
 # 구현된 vocab.txt 를 가지고 tokenizer 를 구현한다.
-tokenizer = BertTokenizer.from_pretrained("./modeling/vocab.txt")
+tokenizer = BertTokenizer.from_pretrained("./vocab.txt")
 tokenized_queries = [tokenizer.tokenize(query) for query in queries]
 
 MAX_LEN = 256
@@ -155,11 +156,10 @@ device = torch.device("cpu")
 
 # ---------------------------------- model 생성 -------------------------------------
 
-config = BertConfig.from_pretrained('bert-base-uncased')
+config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regression")
 config.num_labels = NUM_LABELS
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels = NUM_LABELS)
 # print(model.parameters) -> 확인 결과: (classifier): Linear(in_features=768, out_features=6, bias=True)
-# model2 = BertForMultipleChoice.from_pretrained("")
 
 optimizer = AdamW(model.parameters(),
                   lr = 2e-5, # 학습률
@@ -323,7 +323,7 @@ for epoch_i in range(0, EPOCHS):
         tmp_eval_accuracy = flat_accuracy(logits, label_ids)
         eval_accuracy += tmp_eval_accuracy
         nb_eval_steps += 1
-
+        
     print("  Accuracy: {0:.2f}".format(eval_accuracy/nb_eval_steps))
     print("  Validation took: {:}".format(format_time(time.time() - t0)))
 
