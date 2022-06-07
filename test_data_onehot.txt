@@ -1,0 +1,5 @@
+query	cost
+select c1 from t1;	4.0
+select c2 from t2 where c1;	1.0
+select c5 from t1;	16.0
+select c1 from t2, t1 where c1;	16.0

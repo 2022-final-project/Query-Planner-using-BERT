@@ -1,0 +1,22 @@
+query	cost
+select c17 c18 sum c13 sum c14 sum c14 c15 sum c14 c15 c16 avg c13 avg c14 avg c15 count from t2 where c19 date group by c17 c18 order by c17 c18	32.0
+select c52 c48 c26 c38 c40 c49 c51 c53 from t5 t8 t6 t3 t7 where c38 c54 and c47 c55 and c43 and c42 like and c50 c25 and c27 c59 and c60 and c57 select min c57 from t6 t8 t3 t7 where c38 c54 and c47 c55 and c50 c25 and c27 c59 and c60 order by c52 desc c26 c48 c38	4.0
+select c9 sum c14 c15 c33 c36 from t1 t4 t2 where c7 and c1 c30 and c9 c29 and c33 date and c19 date group by c9 c33 c36 order by desc c33	2.0
+select c34 count from t4 where c33 date and c33 date month and exists select from t2 where c9 c29 and c20 c21 group by c34 order by c34	8.0
+select c26 sum c14 c15 from t1 t4 t2 t8 t3 t7 where c1 c30 and c9 c29 and c11 c47 and c4 c50 and c50 c25 and c27 c59 and c60 and c33 date and c33 date year group by c26 order by desc	1.0
+select sum c14 c15 from t2 where c19 date and c19 date year and c15 and and c13	16.0
+select sum from select year from c19 c14 c15 from t8 t2 t4 t1 t3 t3 where c47 c11 and c29 c9 and c1 c30 and c50 and c4 and and or and and c19 date and date group by order by	2.0
+select sum case when t3 then else end sum from select year from c33 c14 c15 t3 from t5 t8 t2 t4 t1 t3 t3 t7 where c38 c10 and c47 c11 and c9 c29 and c30 c1 and c4 and c59 and c60 and c50 and c33 date and date and c42 group by order by	4.0
+select t3 sum from select c26 t3 year from c33 c14 c15 c57 c13 from t5 t8 t2 t6 t4 t3 where c47 c11 and c55 c11 and c54 c10 and c38 c10 and c29 c9 and c50 c25 and c39 like group by t3 order by t3 desc	1.0
+select c1 c2 sum c14 c15 c6 c26 c3 c5 c8 from t1 t4 t2 t3 where c1 c30 and c9 c29 and c33 date and c33 date month and c17 and c4 c25 group by c1 c2 c6 c5 c26 c3 c8 order by desc	2.0
+select c54 sum c57 c56 from t6 t8 t3 where c55 c47 and c50 c25 and c26 group by c54 having sum c57 c56 select sum c57 c56 from t6 t8 t3 where c55 c47 and c50 c25 and c26 order by desc	32.0
+select c23 sum case when c34 or c34 then else end sum case when c34 and c34 then else end from t4 t2 where c29 c9 and c23 in and c20 c21 and c19 c20 and c21 date and c21 date year group by c23 order by c23	1.0
+select count from select c1 count c29 from t1 t4 on c1 c30 and c37 not like group by c1 c1 group by order by desc desc	8.0
+select sum case when c42 like then c14 c15 else end sum c14 c15 from t2 t5 where c10 c38 and c19 date and c19 date month	1.0
+select c41 c42 c43 count c55 from t6 t5 where c38 c54 and c41 and c42 not like and c43 in and c55 not in select c47 from t8 where c53 like group by c41 c42 c43 order by desc c41 c42 c43	1.0
+select sum c14 from t2 t5 where c38 c10 and c41 and c44 and c13 select avg c13 from t2 where c10 c38	2.0
+select c2 c1 c29 c33 c32 sum c13 from t1 t4 t2 where c29 in select c9 from t2 group by c9 having sum c13 and c1 c30 and c29 c9 group by c2 c1 c29 c33 c32 order by c32 desc c33	32.0
+select sum c15 from t2 t5 where c38 c10 and c41 and c44 in and c13 and c13 and c43 and and c23 in and c22 or c38 c10 and c41 and c44 in and c13 and c13 and c43 and and c23 in and c22 or c38 c10 and c41 and c44 in and c13 and c13 and c43 and and c23 in and c22	1.0
+select c48 c49 from t8 t3 where c47 in select c55 from t6 where c54 in select c38 from t5 where c39 like and c56 select sum c13 from t2 where c10 c54 and c11 c55 and c19 date and c19 date year and c50 c25 and c26 order by c48	4.0
+select c48 count from t8 t2 t4 t3 where c47 and c29 and c31 and and exists select from t2 where and and not exists select from t2 where and and and c50 c25 and c26 group by c48 order by desc c48	8.0
+select count sum c6 from select c5 from c6 from t1 where c5 from in and c6 select avg c6 from t1 where c6 and c5 from in and not exists select from t4 where c30 c1 group by order by	4.0
