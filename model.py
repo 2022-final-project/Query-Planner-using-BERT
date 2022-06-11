@@ -22,6 +22,8 @@ import matplotlib.pyplot as plt
 
 RAND_SEED = random.randint(1, 3000)
 VALIDATION_RATE = 0.1
+EPOCHS = 20
+
 
 # train_data.txt 와 test_data.txt 를 읽어온다.
 train_txt = open('./train_data.txt', 'r')
@@ -166,9 +168,6 @@ optimizer = AdamW(model.parameters(),
                   eps = 1e-8 # 0으로 나누는 것을 방지하기 위한 epsilon 값
                 )
 
-# 에폭수
-EPOCHS = 20
-
 # 총 훈련 스텝 : 배치반복 횟수 * 에폭
 total_steps = len(train_dataloader) * EPOCHS
 
@@ -182,7 +181,7 @@ scheduler = get_linear_schedule_with_warmup(optimizer,
 #                                          verbose=1, save_best_only=True)
 # early_stopping = EarlyStopping(monitor='val_loss', patience=6)
 
-# Accuracy 를 구하는 function 이다.\
+# Accuracy 를 구하는 function 이다.
 def flat_accuracy(preds, labels):
     sze = len(labels)   # len(preds) == len(labels)
 
@@ -198,8 +197,7 @@ def flat_accuracy(preds, labels):
                 cnt += 1
                 break
             
-    print(" acc : ", cnt / total_cnt)
-    return cnt / 18
+    return cnt / total_cnt
 
 def format_time(elapsed):
     # 반올림
