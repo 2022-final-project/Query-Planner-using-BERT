@@ -182,7 +182,7 @@ scheduler = get_linear_schedule_with_warmup(optimizer,
 #                                          verbose=1, save_best_only=True)
 # early_stopping = EarlyStopping(monitor='val_loss', patience=6)
 
-# Accuracy 를 구하는 function 이다.
+# Accuracy 를 구하는 function 이다.\
 def flat_accuracy(preds, labels):
     sze = len(labels)   # len(preds) == len(labels)
 
@@ -190,16 +190,15 @@ def flat_accuracy(preds, labels):
     total_cnt = 0
 
     for idx, pred in enumerate(preds):
+        total_cnt += 1
         for i in range(0, 6, 1):
-            total_cnt += 1
             if pred[i] < 0: pred[i] = 0.0
             else: pred[i] = 1.0
-            if pred[i] == labels[idx][i] : cnt += 1
-
-    # print("preds :", int(preds))
-    # print("labels :", int(labels))
+            if pred[i] == labels[idx][i] :
+                cnt += 1
+                break
+            
     print(" acc : ", cnt / total_cnt)
-
     return cnt / 18
 
 def format_time(elapsed):
