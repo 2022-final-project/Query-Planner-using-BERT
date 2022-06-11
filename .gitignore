@@ -1,3 +1,4 @@
 /testing
 test_data_onehot.txt
 train_dta_onehot.txt
+.DS_STORE
