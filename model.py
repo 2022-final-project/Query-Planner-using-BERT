@@ -22,10 +22,10 @@ import random
 
 
 # train_data.txt 와 test_data.txt 를 읽어온다.
-train_txt = open('./train_data.txt', 'r')
+train_txt = open('./modeling/refined_train_data.txt', 'r')
 train = pd.read_csv(train_txt, sep='\t')
 
-test_txt = open('./test_data.txt', 'r')
+test_txt = open('./test_data_temp.txt', 'r')
 test = pd.read_csv(test_txt, sep='\t')
 
 queries = train['query']    # train_data.txt 의 query 들 양 옆으로 "[CLS]", "[SEP]" 를 붙인다.
@@ -63,7 +63,7 @@ for cost in labels_before_preprocessing:
 
 # ["[CLS] select c1 from t1 [SEP]"]
 
-tokenizer = BertTokenizer.from_pretrained("./vocab.txt")       # 구현된 vocab.txt file로 tokenizer를 구현한다.
+tokenizer = BertTokenizer.from_pretrained("./modeling/vocab.txt")       # 구현된 vocab.txt file로 tokenizer를 구현한다.
 tokenized_queries = [tokenizer.tokenize(query) for query in queries]    # 구현된 tokenizer로 query들을 모두 tokenizing 한다.
 
 # ['[CLS]', 'select', 'c1', 'from', 't1', '[SEP]']
@@ -87,7 +87,7 @@ for seq in input_ids:
 
 RAND_SEED = random.randint(1, 3000)
 VALIDATION_RATE = 0.1
-BATCH_SIZE = 16
+BATCH_SIZE = 8
 
 train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids,
                                                                                     labels, 
@@ -166,13 +166,14 @@ device = torch.device("cpu")
 # ---------------------------------- model 생성 -------------------------------------
 
 # 에폭수
-EPOCHS = 1
+EPOCHS = 50
 
-config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regression")
+config = BertConfig.from_pretrained('bert-base-uncased')
 config.num_labels = NUM_LABELS
 
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels = NUM_LABELS)
 # print(model.parameters) -> 확인 결과: (classifier): Linear(in_features=768, out_features=6, bias=True)
+# model2 = BertForMultipleChoice.from_pretrained("")
 
 optimizer = AdamW(model.parameters(),
                   lr = 2e-5, # 학습률
@@ -197,11 +198,21 @@ def flat_accuracy(preds, labels):
     total_cnt = 0
 
     for idx, pred in enumerate(preds):
+        # print(" label :", labels[idx][:])
+        # print(" pred :", pred[:])
         total_cnt += 6
-        maxIdx = torch.argmax(pred)     # pred에서 가장 큰 값을 가지는 label의 index
 
+        maxIdx = 0
+        for i in range(0,6,1):
+            if pred[maxIdx] < pred[i]:
+                # print(" i :", i, " / ", pred[maxIdx], ", ", pred[i])
+                maxIdx = i
+
+        # pred에서 가장 큰 값을 가지는 label의 index
+        # print(" pred max idx :", maxIdx)
         if labels[idx][maxIdx] == 1:    # label에서 maxIdx에 해당하는 값이 1이면 성공!
             cnt += 6
+            # print("i == ", idx, " / cnt : ", cnt, " / total cnt :", total_cnt)
 
     return cnt / total_cnt
 
@@ -215,7 +226,11 @@ def flat_exact_accuracy(preds, labels):
     total_cnt = 0
 
     for idx, pred in enumerate(preds):
-        total_cnt += 1
+        print(" Exact pred :", pred[:])
+        print(" Exact label :", labels[idx][:])
+
+        total_cnt += 6
+
         for i in range(0, 6, 1):
             if pred[i] < 0: pred[i] = 0.0
             else: pred[i] = 1.0
@@ -334,11 +349,11 @@ for epoch_i in range(0, EPOCHS):
 
         # CPU로 데이터 이동
         # logits = logits.detach().cpu().numpy()
-        label_ids = b_labels.to('cpu').numpy()
+        # label_ids = b_labels.to('cpu').numpy()
         
         # 출력 로짓과 라벨을 비교하여 정확도 계산
-        tmp_eval_exact_accuracy = flat_exact_accuracy(logits, label_ids)
-        tmp_eval_accuracy = flat_accuracy(logits, label_ids)
+        tmp_eval_exact_accuracy = flat_exact_accuracy(logits, b_labels)
+        tmp_eval_accuracy = flat_accuracy(logits, b_labels)
         eval_exact_accuracy += tmp_eval_exact_accuracy
         eval_accuracy += tmp_eval_accuracy
         nb_eval_steps += 1
@@ -474,5 +489,4 @@ def test_sentences(sentences):
     print("=== result : ", ret)
 
 # ——————————— 새로운 문장 테스트 입력 ——————————
-
 logits_test1 = test_sentences(['select c38 avg c43 from t5 t6 where c39 like and c41 in group by c38'])     # label : [1, 0, 0, 0, 1, 1]
