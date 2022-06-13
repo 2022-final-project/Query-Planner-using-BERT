@@ -1,4 +1,3 @@
-
 import tensorflow as tf
 import torch
 
@@ -13,6 +12,7 @@ from keras_preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import random
@@ -22,10 +22,10 @@ import random
 
 
 # train_data.txt 와 test_data.txt 를 읽어온다.
-train_txt = open('./modeling/refined_train_data.txt', 'r')
+train_txt = open('./train_data.txt', 'r')
 train = pd.read_csv(train_txt, sep='\t')
 
-test_txt = open('./test_data_temp.txt', 'r')
+test_txt = open('./test_data.txt', 'r')
 test = pd.read_csv(test_txt, sep='\t')
 
 queries = train['query']    # train_data.txt 의 query 들 양 옆으로 "[CLS]", "[SEP]" 를 붙인다.
@@ -63,7 +63,7 @@ for cost in labels_before_preprocessing:
 
 # ["[CLS] select c1 from t1 [SEP]"]
 
-tokenizer = BertTokenizer.from_pretrained("./modeling/vocab.txt")       # 구현된 vocab.txt file로 tokenizer를 구현한다.
+tokenizer = BertTokenizer.from_pretrained("./vocab.txt")       # 구현된 vocab.txt file로 tokenizer를 구현한다.
 tokenized_queries = [tokenizer.tokenize(query) for query in queries]    # 구현된 tokenizer로 query들을 모두 tokenizing 한다.
 
 # ['[CLS]', 'select', 'c1', 'from', 't1', '[SEP]']
@@ -166,14 +166,13 @@ device = torch.device("cpu")
 # ---------------------------------- model 생성 -------------------------------------
 
 # 에폭수
-EPOCHS = 50
+EPOCHS = 20
 
-config = BertConfig.from_pretrained('bert-base-uncased')
+config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regression")
 config.num_labels = NUM_LABELS
 
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels = NUM_LABELS)
 # print(model.parameters) -> 확인 결과: (classifier): Linear(in_features=768, out_features=6, bias=True)
-# model2 = BertForMultipleChoice.from_pretrained("")
 
 optimizer = AdamW(model.parameters(),
                   lr = 2e-5, # 학습률
@@ -258,6 +257,17 @@ torch.cuda.manual_seed_all(seed_val)
 # 그래디언트 초기화
 model.zero_grad()
 
+# epoch 당 loss 그래프를 그리기 위한 리스트
+train_loss=[]
+val_loss=[]
+
+def plt_loss_graph(loss, dataset_name):
+    plt.plot(EPOCHS)
+    plt.plot(loss)
+    plt.xlabel("Epochs")
+    plt.ylabel(dataset_name)
+    plt.show()
+
 # 에폭만큼 반복
 for epoch_i in range(0, EPOCHS):
     
@@ -297,6 +307,7 @@ for epoch_i in range(0, EPOCHS):
         # print("outputs : ", outputs)  # Output: loss, logits, hidden_states, attentions
 
         loss = outputs[0]           # 로스 구함
+        train_loss.append(float(loss))
         total_loss += loss.item()   # 총 로스 계산
         loss.backward()             # Backward 수행으로 그래디언트 계산
 
@@ -364,6 +375,7 @@ for epoch_i in range(0, EPOCHS):
 
 print("")
 print("Training complete!")
+plt_loss_graph(train_loss, "train loss")
 
 # ---------------------------------- 테스트셋 평가 -------------------------------------
 print("Test set evaluation")
