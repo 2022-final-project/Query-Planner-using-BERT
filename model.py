@@ -2,6 +2,7 @@
 import tensorflow as tf
 import torch
 
+from tensorflow import keras
 from transformers import pipeline
 from transformers import BertTokenizer
 from transformers import BertModel
@@ -18,11 +19,6 @@ import random
 import time
 import datetime
 import random
-import matplotlib.pyplot as plt
-
-RAND_SEED = random.randint(1, 3000)
-VALIDATION_RATE = 0.1
-EPOCHS = 20
 
 
 # train_data.txt 와 test_data.txt 를 읽어온다.
@@ -37,10 +33,13 @@ queries = ["[CLS] " + str(query[:-1]) + " [SEP]" for query in queries]
 
 NUM_LABELS = 6
 
-labels_before_Encoding = train['cost']     
+labels_before_preprocessing = train['cost']     
 labels = []
 
-for cost in labels_before_Encoding:
+# label preprocessing
+''' label값이 011010인 경우 [0, 1, 1, 0, 1, 0]의 6차원 vector가 된다.
+'''
+for cost in labels_before_preprocessing:
     cost_str = str(cost)
     if len(cost_str) == 5: cost_str = "0" + cost_str
     elif len(cost_str) == 4 : cost_str = "00" + cost_str
@@ -50,28 +49,31 @@ for cost in labels_before_Encoding:
     elif len(cost_str) == 0 : cost_str = "000000"
 
     label_temp = [0, 0, 0, 0, 0, 0]
-
     if cost_str[0] == '1': label_temp[0] = 1
     if cost_str[1] == '1': label_temp[1] = 1
     if cost_str[2] == '1': label_temp[2] = 1
     if cost_str[3] == '1': label_temp[3] = 1
     if cost_str[4] == '1': label_temp[4] = 1
     if cost_str[5] == '1': label_temp[5] = 1
-
     labels.append(label_temp)
 
 # ------------------------------------------- Data preProcessing -------------------------------------------
 ''' 1. Tokenizing
 '''
 
-# 구현된 vocab.txt 를 가지고 tokenizer 를 구현한다.
-tokenizer = BertTokenizer.from_pretrained("./vocab.txt")
-tokenized_queries = [tokenizer.tokenize(query) for query in queries]
+# ["[CLS] select c1 from t1 [SEP]"]
 
-MAX_LEN = 256
+tokenizer = BertTokenizer.from_pretrained("./vocab.txt")       # 구현된 vocab.txt file로 tokenizer를 구현한다.
+tokenized_queries = [tokenizer.tokenize(query) for query in queries]    # 구현된 tokenizer로 query들을 모두 tokenizing 한다.
+
+# ['[CLS]', 'select', 'c1', 'from', 't1', '[SEP]']
+
+MAX_LEN = 60
 
 input_ids = [tokenizer.convert_tokens_to_ids(tokenized_query) for tokenized_query in tokenized_queries]
 input_ids = pad_sequences(input_ids, maxlen=MAX_LEN, dtype='long', truncating='post', padding='post')
+
+# [2, 6, 13, 5, 28, 3, 0, 0, 0, ...] --> MAX_LEN 길이를 채우게끔 padding 진행
 
 attention_masks = []
 
@@ -79,7 +81,14 @@ for seq in input_ids:
     seq_mask = [float(i > 0) for i in seq]
     attention_masks.append(seq_mask)
 
+# 0이 아닌 곳을 1로 masking 한다. query가 있는 부분만 1값을 가지게 된다.
+
 # -------------------------------- train_data.txt 로 train/validation set 을 얻는다. --------------------------
+
+RAND_SEED = random.randint(1, 3000)
+VALIDATION_RATE = 0.1
+BATCH_SIZE = 16
+
 train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids,
                                                                                     labels, 
                                                                                     random_state=RAND_SEED, 
@@ -89,14 +98,13 @@ train_masks, validation_masks, _, _ = train_test_split(attention_masks,
                                                        input_ids,
                                                        random_state=RAND_SEED, 
                                                        test_size=VALIDATION_RATE)
+
 train_inputs = torch.tensor(train_inputs).float()
 train_labels = torch.tensor(train_labels).float()
 train_masks = torch.tensor(train_masks).float()
 validation_inputs = torch.tensor(validation_inputs).float()
 validation_labels = torch.tensor(validation_labels).float()
 validation_masks = torch.tensor(validation_masks).float()          
-
-BATCH_SIZE = 16
 
 # 파이토치의 DataLoader로 입력, 마스크, 라벨을 묶어 데이터 설정
 # 학습시 배치 사이즈 만큼 데이터를 가져옴
@@ -124,19 +132,18 @@ for cost in test_labels:
     elif len(cost_str) == 0 : cost_str = "000000"
 
     labels = [0, 0, 0, 0, 0, 0]
-
     if cost_str[0] == 1: labels[0] = 1
     if cost_str[1] == 1: labels[1] = 1
     if cost_str[2] == 1: labels[2] = 1
     if cost_str[3] == 1: labels[3] = 1
     if cost_str[4] == 1: labels[4] = 1
     if cost_str[5] == 1: labels[5] = 1
-
     test_labels_temp.append(labels)
 
 test_labels = test_labels_temp
 
 # 모든 Test query 들을 Tokenize 한다.
+# train data set으로 했던 과정과 동일한 과정들이다.
 tokenized_test_queries = [tokenizer.tokenize(query) for query in test_queries]
 test_input_ids = [tokenizer.convert_tokens_to_ids(tokenized_query) for tokenized_query in tokenized_test_queries]
 test_input_ids = pad_sequences(test_input_ids, maxlen=MAX_LEN, dtype='long', truncating='post', padding='post')
@@ -158,8 +165,12 @@ device = torch.device("cpu")
 
 # ---------------------------------- model 생성 -------------------------------------
 
+# 에폭수
+EPOCHS = 1
+
 config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regression")
 config.num_labels = NUM_LABELS
+
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels = NUM_LABELS)
 # print(model.parameters) -> 확인 결과: (classifier): Linear(in_features=768, out_features=6, bias=True)
 
@@ -176,15 +187,30 @@ scheduler = get_linear_schedule_with_warmup(optimizer,
                                             num_warmup_steps = 0,
                                             num_training_steps = total_steps)
 
-# model_path = './test.model'
-# checkpoint = ModelCheckpoint(filepath=model_path, monitor='val_loss',
-#                                          verbose=1, save_best_only=True)
-# early_stopping = EarlyStopping(monitor='val_loss', patience=6)
-
-# Accuracy 를 구하는 function 이다.
+# accuracy를 구하는 function 1 이다.
+''' target label    == [1, 1, 0, 1, 0, 0]
+    predicted label == [0, 0, 0, 1, 0, 0]
+    이라면 이 set에 대한 accuracy는 100%이다.
+'''
 def flat_accuracy(preds, labels):
-    sze = len(labels)   # len(preds) == len(labels)
+    cnt = 0
+    total_cnt = 0
 
+    for idx, pred in enumerate(preds):
+        total_cnt += 6
+        maxIdx = torch.argmax(pred)     # pred에서 가장 큰 값을 가지는 label의 index
+
+        if labels[idx][maxIdx] == 1:    # label에서 maxIdx에 해당하는 값이 1이면 성공!
+            cnt += 6
+
+    return cnt / total_cnt
+
+# accuracy를 구하는 function 2 이다.
+''' target label    == [1, 1, 0, 1, 0, 0]
+    predicted label == [0, 1, 1, 1, 0, 1]
+    이라면 이 set에 대한 accuracy는 50%이다.
+'''
+def flat_exact_accuracy(preds, labels):
     cnt = 0
     total_cnt = 0
 
@@ -196,7 +222,7 @@ def flat_accuracy(preds, labels):
             if pred[i] == labels[idx][i] :
                 cnt += 1
                 break
-            
+
     return cnt / total_cnt
 
 def format_time(elapsed):
@@ -235,7 +261,6 @@ for epoch_i in range(0, EPOCHS):
     # data_loader 에서 batch 만큼 반복하여 data를 가져온다.
     for step, batch in enumerate(train_dataloader):
         # 경과 정보 표시
-        #if step % 500 == 0 and not step == 0:
         if True:
             elapsed = format_time(time.time() - t0)
             print('  Batch {:>5,}  of  {:>5,}.    Elapsed: {:}.'.format(step, len(train_dataloader), elapsed))
@@ -247,11 +272,6 @@ for epoch_i in range(0, EPOCHS):
         b_input_ids, b_input_mask, b_labels = batch
         b_input_ids = torch.tensor(b_input_ids).to(device).long()
         # b_labels = b_labels.squeeze(0)
-
-        # print("batch :", batch)
-        # print("b_input_ids :", b_input_ids, b_input_ids.shape)   # int64 torch.Size([4, 8])
-        # print("b_input_mask: ", b_input_mask, b_input_mask.shape) # float32 torch.Size([4, 8])
-        # print("labels :", b_labels, b_labels.shape) # float32 torch.Size([4])
 
         # Forward 수행                
         outputs = model(b_input_ids,
@@ -290,7 +310,7 @@ for epoch_i in range(0, EPOCHS):
     model.eval()
 
     # 변수 초기화
-    eval_loss, eval_accuracy = 0, 0
+    eval_loss, eval_accuracy, eval_exact_accuracy = 0, 0, 0
     nb_eval_steps, nb_eval_examples = 0, 0
 
     # 데이터로더에서 배치만큼 반복하여 가져옴
@@ -317,10 +337,13 @@ for epoch_i in range(0, EPOCHS):
         label_ids = b_labels.to('cpu').numpy()
         
         # 출력 로짓과 라벨을 비교하여 정확도 계산
+        tmp_eval_exact_accuracy = flat_exact_accuracy(logits, label_ids)
         tmp_eval_accuracy = flat_accuracy(logits, label_ids)
+        eval_exact_accuracy += tmp_eval_exact_accuracy
         eval_accuracy += tmp_eval_accuracy
         nb_eval_steps += 1
-        
+
+    print("  Exact Accuracy: {0:.2f}".format(eval_exact_accuracy/nb_eval_steps))
     print("  Accuracy: {0:.2f}".format(eval_accuracy/nb_eval_steps))
     print("  Validation took: {:}".format(format_time(time.time() - t0)))
 
@@ -364,18 +387,21 @@ for step, batch in enumerate(test_dataloader):
     logits = outputs[0]
 
     # CPU로 데이터 이동
-    logits = logits.detach().cpu().numpy()
-    label_ids = b_labels.to('cpu').numpy()
+    # logits = logits.detach().cpu().numpy()
+    # label_ids = b_labels.to('cpu').numpy()
     
     # 출력 로짓과 라벨을 비교하여 정확도 계산
+    tmp_eval_exact_accuracy = flat_exact_accuracy(logits, label_ids)
     tmp_eval_accuracy = flat_accuracy(logits, label_ids)
+    eval_exact_accuracy += tmp_eval_exact_accuracy
     eval_accuracy += tmp_eval_accuracy
     nb_eval_steps += 1
 
 print("")
+print("Exact Accuracy: {0:.2f}".format(eval_exact_accuracy/nb_eval_steps))
 print("Accuracy: {0:.2f}".format(eval_accuracy/nb_eval_steps))
 print("Test took: {:}".format(format_time(time.time() - t0)))
-print("Test set evaluation complete!")
+print("Test set evaluation complete!\n\n")
 
 # ---------------------- 새로운 문장 테스트 --------------------
 # 입력 데이터 변환
@@ -434,16 +460,19 @@ def test_sentences(sentences):
     logits = outputs[0]
     
     ret = [0, 0, 0, 0, 0, 0]
+
+    print("logits :", logits)
+
     for val in logits:
-        if val[0] == 1: ret[0] = 1
-        if val[1] == 1: ret[1] = 1
-        if val[2] == 1: ret[2] = 1
-        if val[3] == 1: ret[3] = 1
-        if val[4] == 1: ret[4] = 1
-        if val[5] == 1: ret[5] = 1
+        if val[0] > 0: ret[0] = 1
+        if val[1] > 0: ret[1] = 1
+        if val[2] > 0: ret[2] = 1
+        if val[3] > 0: ret[3] = 1
+        if val[4] > 0: ret[4] = 1
+        if val[5] > 0: ret[5] = 1
 
     print("=== result : ", ret)
 
 # ——————————— 새로운 문장 테스트 입력 ——————————
 
-logits_test1 = test_sentences(['select c17 c18 sum c13 sum c14 sum c14 c15 sum c14 c15 c16 avg c13 avg c14 avg c15 count from t2 where c19 date group by c17 c18 order by c17 c18'])
+logits_test1 = test_sentences(['select c38 avg c43 from t5 t6 where c39 like and c41 in group by c38'])     # label : [1, 0, 0, 0, 1, 1]
