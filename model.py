@@ -260,8 +260,11 @@ model.zero_grad()
 # epoch 당 loss 그래프를 그리기 위한 리스트
 train_loss=[]
 val_loss=[]
+train_exact_acc=[]
+train_acc=[]
+val_acc=[]
 
-def plt_loss_graph(loss, dataset_name):
+def plt_graph(loss, dataset_name):
     plt.plot(loss)
     plt.axis([0, EPOCHS, 0, max(loss)+1])
     plt.xlabel("Epochs")
@@ -365,6 +368,8 @@ for epoch_i in range(0, EPOCHS):
         # 출력 로짓과 라벨을 비교하여 정확도 계산
         tmp_eval_exact_accuracy = flat_exact_accuracy(logits, b_labels)
         tmp_eval_accuracy = flat_accuracy(logits, b_labels)
+        train_exact_acc.append(tmp_eval_exact_accuracy)
+        train_acc.append(tmp_eval_accuracy)
         eval_exact_accuracy += tmp_eval_exact_accuracy
         eval_accuracy += tmp_eval_accuracy
         nb_eval_steps += 1
@@ -375,7 +380,11 @@ for epoch_i in range(0, EPOCHS):
 
 print("")
 print("Training complete!")
-plt_loss_graph(train_loss, "train loss")
+plt_graph(train_loss, "train loss")
+plt_graph(train_exact_acc, "train exact accuracy")
+plt_graph(train_acc, "train accuracy")
+# plt_loss_graph(val_loss, "validation loss")
+
 
 # ---------------------------------- 테스트셋 평가 -------------------------------------
 print("Test set evaluation")
