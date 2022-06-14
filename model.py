@@ -262,8 +262,8 @@ train_loss=[]
 val_loss=[]
 
 def plt_loss_graph(loss, dataset_name):
-    plt.plot(EPOCHS)
     plt.plot(loss)
+    plt.axis([0, EPOCHS, 0, max(loss)+1])
     plt.xlabel("Epochs")
     plt.ylabel(dataset_name)
     plt.show()
@@ -415,7 +415,7 @@ for step, batch in enumerate(test_dataloader):
 
     # CPU로 데이터 이동
     # logits = logits.detach().cpu().numpy()
-    # label_ids = b_labels.to('cpu').numpy()
+    label_ids = b_labels.to('cpu').numpy()
     
     # 출력 로짓과 라벨을 비교하여 정확도 계산
     tmp_eval_exact_accuracy = flat_exact_accuracy(logits, label_ids)
