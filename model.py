@@ -22,10 +22,10 @@ import random
 
 
 # train_data.txt 와 test_data.txt 를 읽어온다.
-train_txt = open('./train_data.txt', 'r')
+train_txt = open('./modeling/refined_train_data.txt', 'r')
 train = pd.read_csv(train_txt, sep='\t')
 
-test_txt = open('./test_data.txt', 'r')
+test_txt = open('./test_data_temp.txt', 'r')
 test = pd.read_csv(test_txt, sep='\t')
 
 queries = train['query']    # train_data.txt 의 query 들 양 옆으로 "[CLS]", "[SEP]" 를 붙인다.
@@ -63,7 +63,7 @@ for cost in labels_before_preprocessing:
 
 # ["[CLS] select c1 from t1 [SEP]"]
 
-tokenizer = BertTokenizer.from_pretrained("./vocab.txt")       # 구현된 vocab.txt file로 tokenizer를 구현한다.
+tokenizer = BertTokenizer.from_pretrained("./modeling/vocab.txt")       # 구현된 vocab.txt file로 tokenizer를 구현한다.
 tokenized_queries = [tokenizer.tokenize(query) for query in queries]    # 구현된 tokenizer로 query들을 모두 tokenizing 한다.
 
 # ['[CLS]', 'select', 'c1', 'from', 't1', '[SEP]']
@@ -87,7 +87,7 @@ for seq in input_ids:
 
 RAND_SEED = random.randint(1, 3000)
 VALIDATION_RATE = 0.1
-BATCH_SIZE = 8
+BATCH_SIZE = 16
 
 train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids,
                                                                                     labels, 
@@ -166,9 +166,9 @@ device = torch.device("cpu")
 # ---------------------------------- model 생성 -------------------------------------
 
 # 에폭수
-EPOCHS = 20
+EPOCHS = 50
 
-config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regression")
+config = BertConfig.from_pretrained('bert-base-uncased')
 config.num_labels = NUM_LABELS
 
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels = NUM_LABELS)
@@ -235,7 +235,10 @@ def flat_exact_accuracy(preds, labels):
             else: pred[i] = 1.0
             if pred[i] == labels[idx][i] :
                 cnt += 1
-                break
+    
+        print("    count :", cnt)
+        print("    Exact pred2 :", pred[:])
+        print("    Exact label2 :", labels[idx][:])
 
     return cnt / total_cnt
 
@@ -310,7 +313,6 @@ for epoch_i in range(0, EPOCHS):
         # print("outputs : ", outputs)  # Output: loss, logits, hidden_states, attentions
 
         loss = outputs[0]           # 로스 구함
-        train_loss.append(float(loss))
         total_loss += loss.item()   # 총 로스 계산
         loss.backward()             # Backward 수행으로 그래디언트 계산
 
@@ -323,6 +325,7 @@ for epoch_i in range(0, EPOCHS):
 
     print("")
     print("  Average training loss: {0:.2f}".format(avg_train_loss))
+    train_loss.append(float(avg_train_loss))
     print("  Training epcoh took: {:}".format(format_time(time.time() - t0)))
         
     # ========================================
@@ -368,14 +371,14 @@ for epoch_i in range(0, EPOCHS):
         # 출력 로짓과 라벨을 비교하여 정확도 계산
         tmp_eval_exact_accuracy = flat_exact_accuracy(logits, b_labels)
         tmp_eval_accuracy = flat_accuracy(logits, b_labels)
-        train_exact_acc.append(tmp_eval_exact_accuracy)
-        train_acc.append(tmp_eval_accuracy)
         eval_exact_accuracy += tmp_eval_exact_accuracy
         eval_accuracy += tmp_eval_accuracy
         nb_eval_steps += 1
 
     print("  Exact Accuracy: {0:.2f}".format(eval_exact_accuracy/nb_eval_steps))
     print("  Accuracy: {0:.2f}".format(eval_accuracy/nb_eval_steps))
+    train_exact_acc.append(eval_exact_accuracy/nb_eval_steps)
+    train_acc.append(eval_accuracy/nb_eval_steps)
     print("  Validation took: {:}".format(format_time(time.time() - t0)))
 
 print("")
@@ -384,7 +387,6 @@ plt_graph(train_loss, "train loss")
 plt_graph(train_exact_acc, "train exact accuracy")
 plt_graph(train_acc, "train accuracy")
 # plt_loss_graph(val_loss, "validation loss")
-
 
 # ---------------------------------- 테스트셋 평가 -------------------------------------
 print("Test set evaluation")
@@ -510,4 +512,5 @@ def test_sentences(sentences):
     print("=== result : ", ret)
 
 # ——————————— 새로운 문장 테스트 입력 ——————————
+
 logits_test1 = test_sentences(['select c38 avg c43 from t5 t6 where c39 like and c41 in group by c38'])     # label : [1, 0, 0, 0, 1, 1]
