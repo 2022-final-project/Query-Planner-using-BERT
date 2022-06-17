@@ -22,10 +22,10 @@ import random
 
 
 # train_data.txt 와 test_data.txt 를 읽어온다.
-train_txt = open('./modeling/refined_train_data.txt', 'r')
+train_txt = open('./train_data.txt', 'r')
 train = pd.read_csv(train_txt, sep='\t')
 
-test_txt = open('./test_data_temp.txt', 'r')
+test_txt = open('./test_data.txt', 'r')
 test = pd.read_csv(test_txt, sep='\t')
 
 queries = train['query']    # train_data.txt 의 query 들 양 옆으로 "[CLS]", "[SEP]" 를 붙인다.
@@ -63,7 +63,7 @@ for cost in labels_before_preprocessing:
 
 # ["[CLS] select c1 from t1 [SEP]"]
 
-tokenizer = BertTokenizer.from_pretrained("./modeling/vocab.txt")       # 구현된 vocab.txt file로 tokenizer를 구현한다.
+tokenizer = BertTokenizer.from_pretrained("./vocab.txt")       # 구현된 vocab.txt file로 tokenizer를 구현한다.
 tokenized_queries = [tokenizer.tokenize(query) for query in queries]    # 구현된 tokenizer로 query들을 모두 tokenizing 한다.
 
 # ['[CLS]', 'select', 'c1', 'from', 't1', '[SEP]']
@@ -168,7 +168,7 @@ device = torch.device("cpu")
 # 에폭수
 EPOCHS = 50
 
-config = BertConfig.from_pretrained('bert-base-uncased')
+config = BertConfig.from_pretrained('bert-base-uncased', problem_type="regression", hidden_dropout_prob=0)
 config.num_labels = NUM_LABELS
 
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels = NUM_LABELS)
